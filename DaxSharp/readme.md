@@ -1,6 +1,6 @@
 # DaxSharp
 
-**DaxSharp** is a .NET utility library that brings DAX-style summarization capabilities to LINQ collections. It offers flexible grouping, filtering, and aggregation of in-memory data structures in a concise, expressive way.
+[**DaxSharp**](https://github.com/koanse/DaxSharp) is a .NET utility library that brings DAX-style summarization capabilities to LINQ collections. It offers flexible grouping, filtering, and aggregation of in-memory data structures in a concise, expressive way.
 
 ## 📦 Installation
 
@@ -32,17 +32,38 @@ var data = new[]
 
 var results = data.SummarizeColumns(
     item => new { item.Product, item.Category },
-    (item, group) => item is { IsActive: true, Category: not "Category1" } || group is { Category: not "Category1" },
-    (items, group) =>
-        items.ToArray() is { Length: > 0 } array
+    (_, _) => true,
+    (items, g) =>
+        items.Where(x => x.Category != "Category1" && x.IsActive).ToArray() is { Length: > 0 } array
             ? array.Sum(x => x.Amount)
             : 2
-);
+).ToList();
+
 ```
 
 The results are:
+- Product1, Category2, 2 
 - Product1, Category2, 20
+- Product2, Category1, 2
 - Product3, Category3, 15.
+
+DAX:
+```
+EVALUATE
+	SUMMARIZECOLUMNS(
+		Sales[Product],
+		Sales[Category],
+		FILTER(
+			Categories,
+			Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
+		),
+		"Sum", IF(
+			ISBLANK(SUM(Sales[Amount])),
+			2,
+			SUM(Sales[Amount])
+		)
+	)
+```
 
 ### SummarizeColumnsCartesian
 Same as `SummarizeColumns`, but includes all combinations of group keys when aggregations on missing data aren't all null or zero.
@@ -74,6 +95,24 @@ The results are:
 - Product1, Category3, 2
 - Product2, Category3, 2
 - Product3, Category3, 15.
+
+DAX:
+```
+EVALUATE
+	SUMMARIZECOLUMNS(
+		Products[Product],
+		Categories[Category],
+		FILTER(
+			Categories,
+			Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
+		),
+		"Sum", IF(
+			ISBLANK(SUM(Sales[Amount])),
+			2,
+			SUM(Sales[Amount])
+		)
+	)
+```
 
 ## 🛠️ API Reference
 `SummarizeColumns<T, TGrouped, TExpressions>`

@@ -1,41 +1,21 @@
-﻿using System.Collections;
+﻿using System.Collections.Concurrent;
 
 namespace DaxSharp;
 
 public static class DaxSharpExtensions
 {
-    public static IEnumerable<(TGrouped grouped, TExpressions expressions)> SummarizeColumns<T, TGrouped,
-        TExpressions>(this IEnumerable<T> items, Func<T, TGrouped> groupByBuilder, Func<T?, TGrouped?, bool> filter,
-        Func<IEnumerable<T>, TGrouped?, TExpressions?> expressions, int maxCount = int.MaxValue)
-        where TGrouped : notnull
-    {
-        var results = items.Where(item => filter(item, default))
-            .GroupBy(groupByBuilder)
-            .Where(g => filter(default, g.Key))
-            .ToDictionary(x => x.Key, x => expressions(x, x.Key));
-
-        var currentCount = 0;
-        foreach (var result in results
-                     .Where(result => result.Value is not null))
-        {
-            if (currentCount++ >= maxCount)
-            {
-                break;
-            }
-
-            yield return (result.Key, result.Value!);
-        }
-    }
-
-    public static IEnumerable<(TGrouped grouped, TExpressions expressions)> SummarizeColumnsCartesian<T, TGrouped,
-        TExpressions>(this IEnumerable<T> items, Func<T, TGrouped> groupByBuilder, Func<T?, TGrouped?, bool> filter,
-        Func<IEnumerable<T>, TGrouped?, TExpressions?> expressions, int maxCount = int.MaxValue)
+    public static IEnumerable<(TGrouped grouped, TExpressions expressions)> SummarizeColumns<T, TGrouped, TExpressions>(
+        this IEnumerable<T> items,
+        Func<T, TGrouped> groupBy,
+        Func<T?, TGrouped?, bool> filter,
+        Func<IEnumerable<T>, TGrouped?, TExpressions?> expressions,
+        IEnumerable<TGrouped>? orderBy = null,
+        int maxCount = int.MaxValue)
         where TGrouped : notnull
     {
         var arrayItems = items.ToArray();
-        var fields = typeof(TGrouped).GetProperties();
 
-        if (fields.Length == 0)
+        if (typeof(TGrouped).GetProperties().Length == 0)
         {
             if (filter(default, default))
             {
@@ -44,82 +24,72 @@ public static class DaxSharpExtensions
         }
         else
         {
-            var results = arrayItems.Where(item => filter(item, default))
-                .GroupBy(groupByBuilder)
-                .Where(g => filter(default, g.Key))
-                .ToDictionary(x => x.Key, x => expressions(x, x.Key));
+            var resultItems = new ConcurrentDictionary<TGrouped, List<T>>();
+            var resultGroups = new HashSet<TGrouped>();
 
-            var groupedValues = fields.Select(_ => new HashSet<object>()).ToArray();
-            foreach (var item in arrayItems)
+            var currentCount = 0;
+            foreach (var groupKey in orderBy ?? arrayItems.Select(groupBy))
             {
-                var itemKey = groupByBuilder(item);
-                for (var groupIndex = 0; groupIndex < groupedValues.Length; groupIndex++)
+                if (currentCount >= maxCount)
                 {
-                    var value = fields[groupIndex].GetValue(itemKey);
-                    groupedValues[groupIndex].Add(value!);
+                    break;
+                }
+
+                if (!filter(default, groupKey))
+                {
+                    continue;
+                }
+                
+                resultItems.TryAdd(groupKey, []);
+                resultGroups.Add(groupKey);
+                currentCount++;
+            }
+
+            const double chunkNumber = 4.0;
+            var chunkSize = (int)Math.Ceiling(arrayItems.Length / chunkNumber);
+            var tasks = new List<Task>();
+
+            for (var i = 0; i < chunkNumber; i++)
+            {
+                var startIndex = i * chunkSize;
+                var endIndex = Math.Min(startIndex + chunkSize, arrayItems.Length);
+                
+                if (startIndex < arrayItems.Length)
+                {
+                    tasks.Add(Task.Run(() =>
+                    {
+                        arrayItems.Skip(startIndex).Take(endIndex - startIndex)
+                            .Where(item => filter(item, default))
+                            .GroupBy(groupBy)
+                            .Where(g => filter(default, g.Key))
+                            .ToList()
+                            .ForEach(x =>
+                            {
+                                if (!resultItems.TryGetValue(x.Key, out var value))
+                                {
+                                    return;
+                                }
+
+                                lock (value)
+                                {
+                                    value.AddRange(x);
+                                }
+                            });
+                    }));
                 }
             }
 
-            var groupedLists = groupedValues.Select(x => x.ToList()).ToArray();
-            var currentValues = new object?[groupedValues.Length];
-            var enumerators = new IEnumerator[groupedLists.Length];
+            Task.WaitAll(tasks.ToArray());
 
-            for (var i = 0; i < enumerators.Length; i++)
+            foreach (var groupKey in resultGroups.Where(groupKey => filter(default, groupKey)))
             {
-                enumerators[i] = groupedLists[i].GetEnumerator();
-                if (enumerators[i].MoveNext())
+                if (resultItems.TryGetValue(groupKey, out var value))
                 {
-                    currentValues[i] = enumerators[i].Current;
+                    yield return (groupKey, expressions(value, groupKey)!);
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Enumerator at index {i} is empty.");
-                }
-            }
-
-            var processCartesian = true;
-            var currentCount = 0;
-            while (processCartesian && currentCount < maxCount)
-            {
-                var ctor = typeof(TGrouped).GetConstructors()[0];
-                var groupKey = (TGrouped)ctor.Invoke(currentValues);
-
-                if (filter(default, groupKey))
-                {
-                    if (results.TryGetValue(groupKey, out var value))
-                    {
-                        if (value is not null)
-                        {
-                            yield return (groupKey, value);
-                        }
-                    }
-                    else
-                    {
-                        var values = expressions([], groupKey);
-                        yield return (groupKey, values!);
-                    }
-
-                    currentCount++;
-                }
-
-                int groupIndex;
-                for (groupIndex = 0; groupIndex < groupedValues.Length; groupIndex++)
-                {
-                    if (enumerators[groupIndex].MoveNext())
-                    {
-                        currentValues[groupIndex] = enumerators[groupIndex].Current!;
-                        break;
-                    }
-
-                    if (groupIndex == groupedValues.Length - 1)
-                    {
-                        processCartesian = false;
-                        break;
-                    }
-
-                    enumerators[groupIndex].Reset();
-                    enumerators[groupIndex].MoveNext();
-                    currentValues[groupIndex] = enumerators[groupIndex].Current!;
+                    yield return (groupKey, expressions([], groupKey)!);
                 }
             }
         }

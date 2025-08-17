@@ -14,7 +14,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = 10 },
             new { productId = "2", customerId = "2", amount = 15 },
             new { productId = "3", customerId = "3", amount = 5 }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -48,7 +48,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -81,7 +81,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -114,7 +114,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -143,7 +143,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -167,7 +167,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -200,7 +200,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             _ => new object(),
@@ -225,7 +225,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = (int?)10 },
             new { productId = "2", customerId = "2", amount = (int?)15 },
             new { productId = "3", customerId = "3", amount = (int?)null }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -250,7 +250,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = 10 },
             new { productId = "2", customerId = "2", amount = 15 },
             new { productId = "3", customerId = "3", amount = 5 }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },
@@ -283,7 +283,7 @@ public class SummarizeColumnsTests
             new { productId = "1", customerId = "2", amount = 10 },
             new { productId = "2", customerId = "2", amount = 15 },
             new { productId = "3", customerId = "3", amount = 5 }
-        }.ToList();
+        };
 
         var result = sales.SummarizeColumns(
             x => new { x.productId, x.customerId },

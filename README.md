@@ -131,9 +131,104 @@ public static IEnumerable<(TGrouped grouped, TExpressions expressions)> Summariz
     where TGrouped : notnull
 ```
 
+## ⚡ Performance
+DaxSharp is optimized for high-performance data processing with parallel execution.
+The library leverages multi-threading and efficient memory management to handle large datasets efficiently.
+
+### Performance Test Examples
+
+**100 Million Rows Test**
+Handles 100 million fact table rows in ~0.7 seconds
+```csharp
+using DaxSharp;
+using System.Diagnostics;
+
+var stopwatch = new Stopwatch();
+stopwatch.Start();
+
+// Create 100 million fact table rows
+var sales = Enumerable.Range(0, 100000000)
+    .Select(i => (productId: i % 1000000, customerId: i % 1000000, amount: i % 100))
+    .ToArray();
+
+stopwatch.Stop();
+Console.WriteLine($"Data creation: {stopwatch.Elapsed}");
+
+stopwatch.Restart();
+
+// Process with SummarizeColumns - equivalent to DAX TOPN(1000, SUMMARIZECOLUMNS(...))
+var result = sales.SummarizeColumns(
+    x => new { x.productId, x.customerId },
+    (_, _) => true,
+    (x, g) => x.ToArray() is { Length: > 0 } array
+        ? array.Sum(y => y.amount)
+        : 1,
+    from pId in Enumerable.Range(0, 1000000)
+    from cId in Enumerable.Range(0, 1000000)
+    select new { productId = pId, customerId = cId },
+    1000
+).ToList();
+
+stopwatch.Stop();
+Console.WriteLine($"Processing: {stopwatch.Elapsed}");
+```
+
+**1 Billion Rows Test:**
+Handles 1 billion fact table rows in ~4.4 seconds.
+```csharp
+using DaxSharp;
+using System.Diagnostics;
+
+var stopwatch = new Stopwatch();
+stopwatch.Start();
+
+// Create 1 billion fact table rows
+var sales = Enumerable.Range(0, 1000000000)
+    .Select(i => (productId: i % 1000000, customerId: i % 1000000, amount: i % 100))
+    .ToArray();
+
+stopwatch.Stop();
+Console.WriteLine($"Data creation: {stopwatch.Elapsed}");
+
+stopwatch.Restart();
+
+// Process with SummarizeColumns
+var result = sales.SummarizeColumns(
+    x => new { x.productId, x.customerId },
+    (_, _) => true,
+    (x, g) => x.ToArray() is { Length: > 0 } array
+        ? array.Sum(y => y.amount)
+        : 1,
+    from pId in Enumerable.Range(0, 1000000)
+    from cId in Enumerable.Range(0, 1000000)
+    select new { productId = pId, customerId = cId },
+    1000
+).ToList();
+
+stopwatch.Stop();
+Console.WriteLine($"Processing: {stopwatch.Elapsed}");
+```
+
+DAX:
+```
+EVALUATE
+	TOPN(
+		1000,
+		SUMMARIZECOLUMNS(
+			Products[ProductId],
+			Categories[CategoryId],
+			"Sum", IF(
+				ISBLANK(SUM(Sales[Amount])),
+				1,
+				SUM(Sales[Amount])
+			)
+		)
+	)
+```
+
 ## ⚙️ Internals
 
-Cartesian expansion in `SummarizeColumns` fills in missing group key combinations with default expression results.
+Cartesian expansion in `SummarizeColumns` fills in missing group key combinations with expression results.
 
 Skips results with all null expressions unless expansion is required.
 

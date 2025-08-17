@@ -31,7 +31,7 @@ EVALUATE
             (Product: "Product1", Category: "Category2", IsActive: true, Amount: 20, Quantity: 3),
             (Product: "Product2", Category: "Category1", IsActive: true, Amount: 5, Quantity: 1),
             (Product: "Product3", Category: "Category3", IsActive: true, Amount: 15, Quantity: 2)
-        }.ToList();
+        };
 
         var results = data.SummarizeColumns(
             item => new { item.Product, item.Category },
@@ -78,7 +78,7 @@ EVALUATE
             (Product: "Product1", Category: "Category2", IsActive: true, Amount: 20, Quantity: 3),
             (Product: "Product2", Category: "Category1", IsActive: true, Amount: 5, Quantity: 1),
             (Product: "Product3", Category: "Category3", IsActive: true, Amount: 15, Quantity: 2)
-        }.ToList();
+        };
 
         var results = data.SummarizeColumns(
             item => new { item.Product, item.Category },

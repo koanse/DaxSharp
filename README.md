@@ -173,7 +173,7 @@ stopwatch.Stop();
 Console.WriteLine($"Processing: {stopwatch.Elapsed}");
 ```
 
-**1 Billion Rows Test:**
+**1 Billion Rows Test**
 Handles 1 billion fact table rows in ~4.4 seconds.
 ```csharp
 using DaxSharp;

@@ -7,7 +7,8 @@ public static class DaxSharpExtensions
     public static IEnumerable<(TGrouped? grouped, TExpressions expressions)> SummarizeColumns<T, TGrouped, TExpressions>(
         this T[] items,
         Func<T, TGrouped> groupBy,
-        Func<T?, TGrouped?, bool> filter,
+        Func<T?, bool> itemFilter,
+        Func<IEnumerable<T?>, TGrouped?, bool> groupFilter,
         Func<IEnumerable<T>, TGrouped?, TExpressions?> expressions,
         IEnumerable<TGrouped>? orderBy = null,
         int maxCount = int.MaxValue)
@@ -15,7 +16,7 @@ public static class DaxSharpExtensions
     {
         if (typeof(TGrouped).GetProperties().Length == 0)
         {
-            if (filter(default, default) && expressions(items, default) is { } result)
+            if (groupFilter(items, default) && expressions(items, default) is { } result)
             {
                 yield return (default, result);
             }
@@ -35,27 +36,23 @@ public static class DaxSharpExtensions
                 {
                     var startIndex = i * chunkSize;
                     var endIndex = Math.Min(startIndex + chunkSize, items.Length);
-                    if (startIndex < items.Length)
+                    tasks.Add(Task.Run(() =>
                     {
-                        tasks.Add(Task.Run(() =>
+                        for (var index = startIndex; index < endIndex; index++)
                         {
-                            for (var index = startIndex; index < endIndex; index++)
+                            var item = items[index];
+                            var itemGroupKey = groupBy(items[index]);
+                            if (!itemFilter(item) || !groupedItems.TryGetValue(itemGroupKey, out var groupItems))
                             {
-                                var item = items[index];
-                                var itemGroupKey = groupBy(items[index]);
-                                if (!filter(item, itemGroupKey)
-                                    || !groupedItems.TryGetValue(itemGroupKey, out var groupItems))
-                                {
-                                    continue;
-                                }
-
-                                lock (groupItems)
-                                {
-                                    groupItems.Add(item);
-                                }
+                                continue;
                             }
-                        }));
-                    }
+
+                            lock (groupItems)
+                            {
+                                groupItems.Add(item);
+                            }
+                        }
+                    }));
                 }
 
                 Task.WaitAll(tasks);
@@ -66,16 +63,15 @@ public static class DaxSharpExtensions
             {
                 foreach (var group in keys)
                 {
-                    if (grouped.TryGetValue(group, out var groupItems)
-                        && expressions(groupItems, group) is { } result)
+                    if (!grouped.TryGetValue(group, out var groupItems))
+                    {
+                        groupItems = [];
+                    }
+
+                    if (groupFilter(groupItems, group) && expressions(groupItems, group) is { } result)
                     {
                         processedGroupCount++;
                         yield return (group, result);
-                    }
-                    else if (expressions([], group) is { } resultNoItems)
-                    {
-                        processedGroupCount++;
-                        yield return (group, resultNoItems);
                     }
 
                     if (processedGroupCount >= maxCount)
@@ -88,11 +84,6 @@ public static class DaxSharpExtensions
             var scanChunkSize = maxCount;
             foreach (var groupKey in orderBy ?? items.Select(groupBy))
             {
-                if (!filter(default!, groupKey))
-                {
-                    continue;
-                }
-
                 groupedItems.TryAdd(groupKey, []);
                 groupKeys.Add(groupKey);
 
@@ -114,7 +105,6 @@ public static class DaxSharpExtensions
 
                 groupKeys = [];
                 groupedItems = [];
-                groupedItems.Clear();
                 scanChunkSize = items.Length;
             }
 

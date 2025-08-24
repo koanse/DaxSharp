@@ -33,17 +33,17 @@ var data = new[]
 
 var results = data.SummarizeColumns(
     item => new { item.Product, item.Category },
+    x => x.IsActive && x.Category != "Category1",
     (_, _) => true,
     (items, g) =>
-        items.Where(x => x.Category != "Category1" && x.IsActive).ToArray() is { Length: > 0 } array
+        items.ToArray() is { Length: > 0 } array
             ? array.Sum(x => x.Amount)
             : 2
 ).ToList();
-
 ```
 
 The results are:
-- Product1, Category2, 2 
+- Product1, Category1, 2
 - Product1, Category2, 20
 - Product2, Category1, 2
 - Product3, Category3, 15
@@ -51,19 +51,19 @@ The results are:
 DAX:
 ```
 EVALUATE
-	SUMMARIZECOLUMNS(
-		Sales[Product],
-		Sales[Category],
-		FILTER(
-			Categories,
-			Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
-		),
-		"Sum", IF(
-			ISBLANK(SUM(Sales[Amount])),
-			2,
-			SUM(Sales[Amount])
-		)
-	)
+    SUMMARIZECOLUMNS(
+        Sales[Product],
+        Sales[Category],
+        FILTER(
+            Categories,
+            Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
+        ),
+        "Sum", IF(
+            ISBLANK(SUM(Sales[Amount])),
+            2,
+            SUM(Sales[Amount])
+        )
+    )
 ```
 
 When the `orderBy` parameter is provided, the method processes groups in the specified order and includes cartesian combinations - meaning it will generate results for all combinations specified in the `orderBy` collection when aggregations on missing data aren't all null or zero.
@@ -102,29 +102,30 @@ The results are:
 DAX:
 ```
 EVALUATE
-	SUMMARIZECOLUMNS(
-		Products[Product],
-		Categories[Category],
-		FILTER(
-			Categories,
-			Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
-		),
-		"Sum", IF(
-			ISBLANK(SUM(Sales[Amount])),
-			2,
-			SUM(Sales[Amount])
-		)
-	)
+    SUMMARIZECOLUMNS(
+        Products[Product],
+        Categories[Category],
+        FILTER(
+            Categories,
+            Categories[IsActive] = TRUE && Categories[Category] <> "Category1"
+        ),
+        "Sum", IF(
+            ISBLANK(SUM(Sales[Amount])),
+            2,
+            SUM(Sales[Amount])
+        )
+    )
 ORDER BY Products[Product] DESC
 ```
 
 ## 🛠️ API Reference
 `SummarizeColumns<T, TGrouped, TExpressions>`
 ```csharp
-public static IEnumerable<(TGrouped grouped, TExpressions expressions)> SummarizeColumns<T, TGrouped, TExpressions>(
-    this IEnumerable<T> items,
+public static IEnumerable<(TGrouped? grouped, TExpressions expressions)> SummarizeColumns<T, TGrouped, TExpressions>(
+    this T[] items,
     Func<T, TGrouped> groupBy,
-    Func<T?, TGrouped?, bool> filter,
+    Func<T?, bool> itemFilter,
+    Func<IEnumerable<T?>, TGrouped?, bool> groupFilter,
     Func<IEnumerable<T>, TGrouped?, TExpressions?> expressions,
     IEnumerable<TGrouped>? orderBy = null,
     int maxCount = int.MaxValue)
@@ -137,7 +138,7 @@ The library leverages multi-threading and efficient memory management to handle 
 
 ### Performance Test Examples
 
-**100 Million Rows Test**
+#### 100 Million Rows Test
 Handles 100 million fact table rows in ~0.7 seconds
 ```csharp
 using DaxSharp;
@@ -173,7 +174,7 @@ stopwatch.Stop();
 Console.WriteLine($"Processing: {stopwatch.Elapsed}");
 ```
 
-**1 Billion Rows Test**
+#### 1 Billion Rows Test
 Handles 1 billion fact table rows in ~4.4 seconds.
 ```csharp
 using DaxSharp;
@@ -212,18 +213,18 @@ Console.WriteLine($"Processing: {stopwatch.Elapsed}");
 DAX:
 ```
 EVALUATE
-	TOPN(
-		1000,
-		SUMMARIZECOLUMNS(
-			Products[ProductId],
-			Categories[CategoryId],
-			"Sum", IF(
-				ISBLANK(SUM(Sales[Amount])),
-				1,
-				SUM(Sales[Amount])
-			)
-		)
-	)
+    TOPN(
+        1000,
+        SUMMARIZECOLUMNS(
+            Products[ProductId],
+            Categories[CategoryId],
+            "Sum", IF(
+                ISBLANK(SUM(Sales[Amount])),
+                1,
+                SUM(Sales[Amount])
+            )
+        )
+    )
 ```
 
 ## ⚙️ Internals

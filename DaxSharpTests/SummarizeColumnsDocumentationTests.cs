@@ -152,9 +152,20 @@ EVALUATE
         var mermaidBar = results.ToMermaidBarChart("Bar", "x", "y", x => x.Product, x => x.sum.ToString());
         var markdownTable = results.ToMarkdownTable();
         
-        Assert.Equal("pie title Pie\r\n    \"Product1\" : 2\r\n    \"Product2\" : 2\r\n    \"Product3\" : 2\r\n", mermaidPie);
-        Assert.Equal("xychart-beta title \"Line\"\r\n    x-axis x  [1,2,3]\r\n    y-axis y line [2,2,2]\r\n", mermaidLine);
-        Assert.Equal("xychart-beta title \"Bar\"\r\n    x-axis x  [Product1,Product2,Product3]\r\n    y-axis y bar [2,2,2]\r\n", mermaidBar);
-        Assert.Equal("| ProductId | Product | sum |\r\n| --- | --- | --- |\r\n| 1 | Product1 | 2 |\r\n| 2 | Product2 | 2 |\r\n| 3 | Product3 | 2 |\r\n", markdownTable);
+        Assert.Equal($"pie title Pie{Environment.NewLine}" +
+                     $"    \"Product1\" : 2{Environment.NewLine}" +
+                     $"    \"Product2\" : 2{Environment.NewLine}" +
+                     $"    \"Product3\" : 2{Environment.NewLine}", mermaidPie);
+        Assert.Equal($"xychart-beta title \"Line\"{Environment.NewLine}" +
+                     $"    x-axis x  [1,2,3]{Environment.NewLine}" +
+                     $"    y-axis y line [2,2,2]{Environment.NewLine}", mermaidLine);
+        Assert.Equal($"xychart-beta title \"Bar\"{Environment.NewLine}" +
+                     $"    x-axis x  [Product1,Product2,Product3]{Environment.NewLine}" +
+                     $"    y-axis y bar [2,2,2]{Environment.NewLine}", mermaidBar);
+        Assert.Equal($"| ProductId | Product | sum |{Environment.NewLine}" +
+                     $"| --- | --- | --- |{Environment.NewLine}" +
+                     $"| 1 | Product1 | 2 |{Environment.NewLine}" +
+                     $"| 2 | Product2 | 2 |{Environment.NewLine}" +
+                     $"| 3 | Product3 | 2 |{Environment.NewLine}", markdownTable);
     }
 }

@@ -37,7 +37,10 @@ EVALUATE
             x => x.productId,
             x => x.ToString());
         
-        Assert.Equal("pie title Pie\r\n    \"1\" : 21\r\n    \"2\" : 31\r\n    \"3\" : 11\r\n", mermaidPie);
+        Assert.Equal($"pie title Pie{Environment.NewLine}" +
+                     $"    \"1\" : 21{Environment.NewLine}" +
+                     $"    \"2\" : 31{Environment.NewLine}" +
+                     $"    \"3\" : 11{Environment.NewLine}", mermaidPie);
     }
 
 /*
@@ -75,7 +78,9 @@ EVALUATE
             x => x.productId,
             x => x.ToString());
         
-        Assert.Equal("xychart-beta title \"Line\"\r\n    x-axis X  [1,2,3]\r\n    y-axis Y line [21,31,11]\r\n", mermaidLine);
+        Assert.Equal($"xychart-beta title \"Line\"{Environment.NewLine}" +
+                     $"    x-axis X  [1,2,3]{Environment.NewLine}" +
+                     $"    y-axis Y line [21,31,11]{Environment.NewLine}", mermaidLine);
     }
 
 /*
@@ -113,7 +118,9 @@ EVALUATE
             x => x.productId,
             x => x.ToString());
         
-        Assert.Equal("xychart-beta title \"Line\"\r\n    x-axis X  [1,2,3]\r\n    y-axis Y bar [21,31,11]\r\n", mermaidBar);
+        Assert.Equal($"xychart-beta title \"Line\"{Environment.NewLine}" +
+                     $"    x-axis X  [1,2,3]{Environment.NewLine}" +
+                     $"    y-axis Y bar [21,31,11]{Environment.NewLine}", mermaidBar);
     }
 
 /*
@@ -149,6 +156,10 @@ EVALUATE
 
         var markdownTable = result.ToMarkdownTable();
         
-        Assert.Equal("| productId | sum |\r\n| --- | --- |\r\n| 1 | 21 |\r\n| 2 | 31 |\r\n| 3 | 11 |\r\n", markdownTable);
+        Assert.Equal($"| productId | sum |{Environment.NewLine}" +
+                     $"| --- | --- |{Environment.NewLine}" +
+                     $"| 1 | 21 |{Environment.NewLine}" +
+                     $"| 2 | 31 |{Environment.NewLine}" +
+                     $"| 3 | 11 |{Environment.NewLine}", markdownTable);
     }
 }

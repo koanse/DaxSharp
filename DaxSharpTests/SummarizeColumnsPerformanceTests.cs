@@ -67,7 +67,7 @@ EVALUATE
     )
 */
     [Fact]
-    public void SummarizeColumns_NoConstant_1000M()
+    public void SummarizeColumns_Constant_1000M()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();

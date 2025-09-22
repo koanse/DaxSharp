@@ -26,10 +26,8 @@ public static class DaxSharpExtensions
             double chunkCount = Environment.ProcessorCount;
             var chunkSize = (int)Math.Ceiling(items.Length / chunkCount);
             var processedGroupCount = 0;
-            List<TGrouped> groupKeys = [];
-            var groupedItems = new ConcurrentDictionary<TGrouped, List<T>>();
 
-            void ScanItems()
+            void ScanItems(ConcurrentDictionary<TGrouped, List<T>> groupedItems)
             {
                 var tasks = new List<Task>();
                 for (var i = 0; i < chunkCount; i++)
@@ -81,18 +79,22 @@ public static class DaxSharpExtensions
                 }
             }
 
-            var scanChunkSize = maxCount;
+            List<TGrouped> groupKeys = [];
+            var groupedItems = new ConcurrentDictionary<TGrouped, List<T>>();
+            var scanChunkSize = maxCount * 5;
             foreach (var groupKey in orderBy ?? items.Select(groupBy))
             {
-                groupedItems.TryAdd(groupKey, []);
-                groupKeys.Add(groupKey);
+                if (groupedItems.TryAdd(groupKey, []))
+                {
+                    groupKeys.Add(groupKey);
+                }
 
                 if (groupKeys.Count < scanChunkSize)
                 {
                     continue;
                 }
 
-                ScanItems();
+                ScanItems(groupedItems);
                 foreach (var group in CalculatedGroups(groupKeys, groupedItems))
                 {
                     yield return group;
@@ -102,18 +104,14 @@ public static class DaxSharpExtensions
                 {
                     yield break;
                 }
-
-                groupKeys = [];
-                groupedItems = [];
-                scanChunkSize = items.Length;
             }
-
+            
             if (groupKeys.Count == 0)
             {
                 yield break;
             }
-
-            ScanItems();
+            
+            ScanItems(groupedItems);
             foreach (var group in CalculatedGroups(groupKeys, groupedItems))
             {
                 yield return group;

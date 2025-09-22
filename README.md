@@ -80,15 +80,16 @@ var data = new[]
 
 var results = data.SummarizeColumns(
     item => new { item.Product, item.Category },
-    (item, group) => item is { IsActive: true, Category: not "Category1" } || group is { Category: not "Category1" },
-    (items, group) =>
+    item => item is { IsActive: true, Category: not "Category1" },
+    (_, g) => g is { Category: not "Category1" },
+    (items, _) =>
         items.ToArray() is { Length: > 0 } array
             ? array.Sum(x => x.Amount)
             : 2,
-    from pId in Enumerable.Range(1, 3).OrderByDescending(x => x)
+    from pId in Enumerable.Range(1, 3)
     from cId in Enumerable.Range(1, 3)
     select new { Product = $"Product{pId}", Category = $"Category{cId}" }
-);
+).ToList();
 ```
 
 The results are:

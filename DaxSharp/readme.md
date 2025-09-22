@@ -197,7 +197,11 @@ Result:
 | 3 | Product3 | 2 |
 ```
 
-![img_table.png](https://raw.githubusercontent.com/koanse/DaxSharp/tree/main/DaxSharp/images/img_table.png)
+| ProductId | Product | sum |  
+| --- | --- | --- |  
+| 1 | Product1 | 2 |  
+| 2 | Product2 | 2 |  
+| 3 | Product3 | 2 |
 
 - **ToMermaidPieChart**: Builds a Mermaid pie chart snippet.
 
@@ -212,15 +216,17 @@ pie title Pie
     "Product3" : 2
 ```
 
-![img_pie.png](https://raw.githubusercontent.com/koanse/DaxSharp/tree/main/DaxSharp/images/img_pie.png)
-
 - **ToMermaidLineChart**: Builds a Mermaid xychart-beta line chart.
 
 ```csharp
 string mermaidLine = results.ToMermaidLineChart("Line", "x", "y",  x => x.ProductId.ToString(), x => x.sum.ToString());
 ```
 
-![img_line.png](https://raw.githubusercontent.com/koanse/DaxSharp/tree/main/DaxSharp/images/img_line.png)
+```mermaid
+xychart-beta title "Line"
+    x-axis x  [1,2,3]
+    y-axis y line [2,2,2]
+```
 
 - **ToMermaidBarChart**: Builds a Mermaid xychart-beta bar chart.
 
@@ -228,7 +234,11 @@ string mermaidLine = results.ToMermaidLineChart("Line", "x", "y",  x => x.Produc
 string mermaidBar = results.ToMermaidBarChart("Bar", "x", "y", x => x.Product, x => x.sum.ToString());
 ```
 
-![img_bar.png](https://raw.githubusercontent.com/koanse/DaxSharp/tree/main/DaxSharp/images/img_bar.png)
+```mermaid
+xychart-beta title "Bar"
+    x-axis x  [Product1,Product2,Product3]
+    y-axis y bar [2,2,2]
+```
 
 Notes:
 - Group and expression selectors should return strings for Mermaid helpers.

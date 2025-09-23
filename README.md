@@ -140,27 +140,27 @@ Test data to apply UI extensions:
 ```csharp
 using DaxSharp;
 
-        var data = new[]
-        {
-            (ProductId: 1, Product: "Product1", Category: "Category1", IsActive: true, Amount: 10, Quantity: 2),
-            (ProductId: 2, Product: "Product1", Category: "Category2", IsActive: true, Amount: 20, Quantity: 3),
-            (ProductId: 3, Product: "Product2", Category: "Category1", IsActive: true, Amount: 5, Quantity: 1),
-            (ProductId: 4, Product: "Product3", Category: "Category3", IsActive: true, Amount: 15, Quantity: 2)
-        };
+var data = new[]
+{
+    (ProductId: 1, Product: "Product1", Category: "Category1", IsActive: true, Amount: 10, Quantity: 2),
+    (ProductId: 2, Product: "Product1", Category: "Category2", IsActive: true, Amount: 20, Quantity: 3),
+    (ProductId: 3, Product: "Product2", Category: "Category1", IsActive: true, Amount: 5, Quantity: 1),
+    (ProductId: 4, Product: "Product3", Category: "Category3", IsActive: true, Amount: 15, Quantity: 2)
+};
 
-        var results = data.SummarizeColumns(
-            item => new { item.ProductId, item.Product },
-            item => item is { IsActive: true, Category: not "Category1" },
-            (_, _) => true,
-            (items, _) => new
-            {
-                sum = items.ToArray() is { Length: > 0 } array
-                    ? array.Sum(x => x.Amount)
-                    : 2
-            },
-            from pId in Enumerable.Range(1, 3)
-            select new { ProductId = pId, Product = $"Product{pId}" }
-        ).ToList();
+var results = data.SummarizeColumns(
+    item => new { item.ProductId, item.Product },
+    item => item is { IsActive: true, Category: not "Category1" },
+    (_, _) => true,
+    (items, _) => new
+    {
+        sum = items.ToArray() is { Length: > 0 } array
+            ? array.Sum(x => x.Amount)
+            : 2
+    },
+    from pId in Enumerable.Range(1, 3)
+        select new { ProductId = pId, Product = $"Product{pId}" }
+    ).ToList();
 ```
 
 DAX:
@@ -216,7 +216,7 @@ pie title Pie
     "Product3" : 2
 ```
 
-- **ToMermaidLineChart**: Builds a Mermaid xychart-beta line chart.
+- **ToMermaidLineChart**: Builds a Mermaid `xychart-beta` line chart.
 
 ```csharp
 string mermaidLine = results.ToMermaidLineChart("Line", "x", "y",  x => x.ProductId.ToString(), x => x.sum.ToString());
@@ -228,7 +228,7 @@ xychart-beta title "Line"
     y-axis y line [2,2,2]
 ```
 
-- **ToMermaidBarChart**: Builds a Mermaid xychart-beta bar chart.
+- **ToMermaidBarChart**: Builds a Mermaid `xychart-beta` bar chart.
 
 ```csharp
 string mermaidBar = results.ToMermaidBarChart("Bar", "x", "y", x => x.Product, x => x.sum.ToString());

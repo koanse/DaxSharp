@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using Xunit.Sdk;
 
 namespace DaxSharpTests;
 
@@ -13,7 +12,7 @@ public class ExportPostgresTests
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw SkipException.ForSkip("Power BI connection requires Windows");
+            return;
         }
         
         var config = DaxSharpConfig.Instance;
@@ -33,7 +32,7 @@ public class ExportPostgresTests
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw SkipException.ForSkip("Power BI connection requires Windows");
+            return;
         }
         
         var config = DaxSharpConfig.Instance;
@@ -59,7 +58,7 @@ public class ExportPostgresTests
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw SkipException.ForSkip("Power BI connection requires Windows");
+            return;
         }
         
         const string daxQuery = """
@@ -143,7 +142,7 @@ public class ExportPostgresTests
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw SkipException.ForSkip("Power BI connection requires Windows");
+            return;
         }
         
         var config = DaxSharpConfig.Instance;
@@ -178,7 +177,7 @@ public class ExportPostgresTests
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw SkipException.ForSkip("Power BI connection requires Windows");
+            return;
         }
         
         var config = DaxSharpConfig.Instance;

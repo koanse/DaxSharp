@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
+using Xunit.Sdk;
 
 namespace DaxSharpTests;
 
@@ -9,6 +11,11 @@ public class ExportPostgresTests
     [Fact]
     public void ExportAllTables_FromPowerBiToPostgreSQL_ShouldSucceed()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            throw SkipException.ForSkip("Power BI connection requires Windows");
+        }
+        
         var config = DaxSharpConfig.Instance;
         var results = DaxSharpPbiExportToPostgres.ExportAllTables(
             pbiConnectionString: config.ConnectionStrings.PowerBi,
@@ -24,6 +31,11 @@ public class ExportPostgresTests
     [Fact]
     public void ExecuteDaxQueryEnumerable_WithLazyLoading_ShouldProcessRowsIncrementally()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            throw SkipException.ForSkip("Power BI connection requires Windows");
+        }
+        
         var config = DaxSharpConfig.Instance;
         var connectionString = config.ConnectionStrings.PowerBi;
         const string query = "EVALUATE 'sales'";
@@ -45,6 +57,11 @@ public class ExportPostgresTests
     [Fact]
     public async Task ConvertDaxToSqlWithValidation_UsingOpenAI_ShouldGenerateValidSqlAndMatchResults()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            throw SkipException.ForSkip("Power BI connection requires Windows");
+        }
+        
         const string daxQuery = """
                                 EVALUATE
                                 SUMMARIZECOLUMNS(
@@ -124,6 +141,11 @@ public class ExportPostgresTests
     [Fact]
     public void GetDatabaseSchema_FromPowerBi_ShouldReturnValidSchemaWithTablesAndColumns()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            throw SkipException.ForSkip("Power BI connection requires Windows");
+        }
+        
         var config = DaxSharpConfig.Instance;
         var connectionString = config.ConnectionStrings.PowerBi;
         
@@ -154,6 +176,11 @@ public class ExportPostgresTests
     [Fact]
     public void GetDatabaseSchemaDescription_FromPowerBi_ShouldReturnFormattedTextDescription()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            throw SkipException.ForSkip("Power BI connection requires Windows");
+        }
+        
         var config = DaxSharpConfig.Instance;
         var connectionString = config.ConnectionStrings.PowerBi;
         

@@ -338,6 +338,162 @@ EVALUATE
     )
 ```
 
+## 🔄 Power BI to PostgreSQL Export
+
+DaxSharp provides comprehensive tools for exporting data and converting queries from Power BI to PostgreSQL.
+
+### Export All Tables
+
+Export all tables from Power BI to PostgreSQL with automatic schema creation:
+
+```csharp
+using DaxSharp;
+
+var config = DaxSharpConfig.Instance;
+var results = DaxSharpPbiExportToPostgres.ExportAllTables(
+    pbiConnectionString: config.ConnectionStrings.PowerBi,
+    postgresConnectionString: config.ConnectionStrings.PostgreSQL
+);
+
+// results is a Dictionary<string, int> with table names and row counts
+foreach (var result in results)
+{
+    Console.WriteLine($"Table {result.Key}: {result.Value} rows exported");
+}
+```
+
+### Lazy Loading DAX Queries
+
+Execute DAX queries with lazy loading for processing large datasets incrementally:
+
+```csharp
+using DaxSharp;
+
+var connectionString = config.ConnectionStrings.PowerBi;
+const string query = "EVALUATE 'sales'";
+
+// Process rows incrementally without loading everything into memory
+foreach (var row in DaxSharpPbiExportExtensions.ExecuteDaxQueryEnumerable(connectionString, query))
+{
+    foreach (var column in row)
+    {
+        Console.WriteLine($"{column.Key}: {column.Value}");
+    }
+}
+```
+
+### Convert DAX to SQL with Validation
+
+Convert DAX queries to PostgreSQL SQL using OpenAI API with automatic validation and iterative error fixing:
+
+```csharp
+using DaxSharp;
+
+const string daxQuery = """
+    EVALUATE
+    SUMMARIZECOLUMNS(
+        product[product_color],
+        customer[customer_gender],
+        FILTER(
+            customer,
+            customer[customer_gender] = "M"
+        ),
+        "Total Sales", CALCULATE(
+            SUM(sales[amount]),
+            FILTER(
+                product,
+                product[product_color] IN {
+                    "Green",
+                    "Silver"
+                }
+            )
+        )
+    )
+    """;
+
+var config = DaxSharpConfig.Instance;
+var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") 
+             ?? config.OpenAi.DefaultApiKey;
+
+var result = await DaxSharpPbiExportToPostgres.ConvertDaxToSqlWithValidation(
+    daxQuery: daxQuery,
+    pbiConnectionString: config.ConnectionStrings.PowerBi,
+    postgresConnectionString: config.ConnectionStrings.PostgreSQL,
+    schemaName: config.PostgreSql.DefaultSchema,
+    apiKey: apiKey,
+    maxIterations: config.OpenAi.DefaultMaxIterations
+);
+
+if (result.ResultsMatch)
+{
+    Console.WriteLine($"SQL Query: {result.SqlQuery}");
+    Console.WriteLine($"Results match! PowerBI: {result.PowerBiResults.Count} rows, PostgreSQL: {result.PostgresResults.Count} rows");
+}
+else
+{
+    Console.WriteLine($"Error: {result.ErrorMessage}");
+}
+```
+
+**Features:**
+- Automatic DAX to SQL conversion using OpenAI
+- Results validation by comparing Power BI and PostgreSQL query results
+- Iterative error fixing with configurable max iterations
+- Caching to avoid redundant API calls
+- Schema-aware conversion using database metadata
+
+### Get Database Schema
+
+Retrieve complete database schema including tables, columns, and relationships:
+
+```csharp
+using DaxSharp;
+
+var connectionString = config.ConnectionStrings.PowerBi;
+var schema = DaxSharpPbiExportExtensions.GetDatabaseSchema(connectionString);
+
+foreach (var table in schema.Tables)
+{
+    Console.WriteLine($"Table: {table.TableName}");
+    foreach (var column in table.Columns)
+    {
+        Console.WriteLine($"  Column: {column.Name} ({column.DataType}, nullable: {column.IsNullable})");
+    }
+    
+    foreach (var relationship in table.Relationships)
+    {
+        Console.WriteLine($"  Relationship: {table.TableName}[{relationship.FromColumn}] -> {relationship.ToTable}[{relationship.ToColumn}] ({relationship.RelationshipType})");
+    }
+}
+```
+
+### Get Database Schema Description
+
+Get a formatted text description of the database schema:
+
+```csharp
+using DaxSharp;
+
+var connectionString = config.ConnectionStrings.PowerBi;
+var description = DaxSharpPbiExportExtensions.GetDatabaseSchemaDescription(connectionString);
+
+Console.WriteLine(description);
+```
+
+Output format:
+```
+Table sales, columns:
+  product_id (Int32, nullable)
+  customer_id (Int32, nullable)
+  amount (Decimal, nullable)
+Relationships:
+  sales[product_id] -> product[id]: ManyToOne
+
+Table product, columns:
+  id (Int32, not null)
+  name (String, nullable)
+```
+
 ## ⚙️ Internals
 
 Cartesian expansion in `SummarizeColumns` fills in missing group key combinations with expression results.
